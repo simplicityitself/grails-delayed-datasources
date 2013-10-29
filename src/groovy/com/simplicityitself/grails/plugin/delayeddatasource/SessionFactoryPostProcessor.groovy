@@ -25,18 +25,20 @@ class SessionFactoryPostProcessor implements BeanFactoryPostProcessor, BeanDefin
 
   private void makeDatasourceDefinitionsLazy(BeanDefinitionRegistry beanDefinitionRegistry) {
 
-    //TODO, iterate all potential datasources
+    def beans = beanDefinitionRegistry.beanDefinitionNames.findAll { it.startsWith("dataSource") }
 
-    def dsName = "dataSource"
+    beans.each {
+      def dsName = it
 
-    def beanDef = beanDefinitionRegistry.getBeanDefinition(dsName)
-    beanDef.lazyInit = true
+      def beanDef = beanDefinitionRegistry.getBeanDefinition(dsName)
+      beanDef.lazyInit = true
 
-    beanDefinitionRegistry.registerBeanDefinition("${dsName}_lazy", beanDef)
-    beanDef.clone()
-    beanDefinitionRegistry.removeBeanDefinition(dsName)
+      beanDefinitionRegistry.registerBeanDefinition("${dsName}_lazy", beanDef)
 
-    createLazyProxyDataSource(beanDefinitionRegistry, dsName)
+      beanDefinitionRegistry.removeBeanDefinition(dsName)
+
+      createLazyProxyDataSource(beanDefinitionRegistry, dsName)
+    }
   }
 
   private createLazyProxyDataSource(
@@ -52,13 +54,14 @@ class SessionFactoryPostProcessor implements BeanFactoryPostProcessor, BeanDefin
   @Override
   void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
 
-    //TODO, iterate all potential session factories.
+    def beans = configurableListableBeanFactory.beanDefinitionNames.findAll { it.startsWith("sessionFactory") }
 
-    def sessionFactoryName = "sessionFactory"
+    beans.each {
+      def sessionFactoryName = it
 
-    configurableListableBeanFactory.getBeanDefinition(sessionFactoryName).beanClassName =
-      DelayedSessionFactoryBean.name
-
+      configurableListableBeanFactory.getBeanDefinition(sessionFactoryName).beanClassName =
+        DelayedSessionFactoryBean.name
+    }
   }
 }
 

@@ -30,10 +30,10 @@ Add the latest version of the plugin to the BuildConfig.groovy
 
 ## Roadmap
 
-Support Grails 2 datasources and configurations
-Support Grails 1.3.7 datasources plugin
-Support enforcement of explicit dialect configuration
-Enforce pool size for commons pool
-Enforce pool size for C3P0
-Enforce pool size for Tomcat JDBC Pool
-Record failure and success to infer database connection status and expose via a user screen/ JSON endpoint
+* Support Grails 2 datasources and configurations
+* Support Grails 1.3.7 datasources plugin
+* Support enforcement of explicit dialect configuration
+* Enforce pool size for commons pool
+* Enforce pool size for C3P0
+* Enforce pool size for Tomcat JDBC Pool
+* Record failure and success to infer database connection status and expose via a user screen/ JSON endpoint

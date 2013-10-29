@@ -29,8 +29,5 @@ Requires some changes to datasource config, which this plugin will attempt to ap
 
     //TODO, add support for oracle somehow.
     lobHandlerOverride(DefaultLobHandler)
-
-    dataSource(LazyDataSource)
-
   }
 }

@@ -1,13 +1,15 @@
 package com.simplicityitself.grails.plugin.delayeddatasource
-import org.apache.commons.dbcp.BasicDataSource
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.beans.BeansException
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
+import org.springframework.beans.factory.support.GenericBeanDefinition
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.jdbc.datasource.DelegatingDataSource
 
+import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.SQLException
 
@@ -17,25 +19,57 @@ class SessionFactoryPostProcessor implements BeanFactoryPostProcessor, BeanDefin
   void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
     beanDefinitionRegistry.removeBeanDefinition("lobHandlerDetector")
     beanDefinitionRegistry.registerAlias("lobHandlerOverride", "lobHandlerDetector")
+
+    makeDatasourceDefinitionsLazy(beanDefinitionRegistry)
+  }
+
+  private void makeDatasourceDefinitionsLazy(BeanDefinitionRegistry beanDefinitionRegistry) {
+
+    //TODO, iterate all potential datasources
+
+    def dsName = "dataSource"
+
+    def beanDef = beanDefinitionRegistry.getBeanDefinition(dsName)
+    beanDef.lazyInit = true
+
+    beanDefinitionRegistry.registerBeanDefinition("${dsName}_lazy", beanDef)
+    beanDef.clone()
+    beanDefinitionRegistry.removeBeanDefinition(dsName)
+
+    createLazyProxyDataSource(beanDefinitionRegistry, dsName)
+  }
+
+  private createLazyProxyDataSource(
+      BeanDefinitionRegistry beanDefinitionRegistry, String dsName) {
+    def dataSource = new GenericBeanDefinition()
+    dataSource.lazyInit = false
+    dataSource.beanClassName = LazyDataSource.name
+    dataSource.getPropertyValues().add("dsName", dsName)
+
+    beanDefinitionRegistry.registerBeanDefinition(dsName, dataSource)
   }
 
   @Override
   void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
 
-    configurableListableBeanFactory.getBeanDefinition("sessionFactory").beanClassName =
-      DelayedSessionFactoryBean.name
+    //TODO, iterate all potential session factories.
 
-    println "CALZZ FOR SESSION FACTOPRY=${configurableListableBeanFactory.getBeanDefinition("sessionFactory").beanClassName}"
+    def sessionFactoryName = "sessionFactory"
+
+    configurableListableBeanFactory.getBeanDefinition(sessionFactoryName).beanClassName =
+      DelayedSessionFactoryBean.name
 
   }
 }
 
-//TODO, replace this with some kind of lazy proxy from the existing data source
-//This would preserve the pooling behaviour form other plugins (such as tomcat-jdbc)
 
-class LazyDataSource extends DelegatingDataSource {
+class LazyDataSource extends DelegatingDataSource implements ApplicationContextAware {
 
-  private boolean _initialized
+  private boolean initialized
+
+  String dsName
+
+  ApplicationContext applicationContext
 
   @Override
   Connection getConnection() throws SQLException {
@@ -49,16 +83,15 @@ class LazyDataSource extends DelegatingDataSource {
   }
 
   private synchronized void initialize() {
-    if (_initialized) {
+    if (initialized) {
       return
     }
 
-    def config = ConfigurationHolder.config.dataSource
-    setTargetDataSource(new BasicDataSource(
-        driverClassName: config.driverClassName, password: config.password,
-        username: config.username, url: config.url))
+    DataSource target = applicationContext.getBean("${dsName}_lazy")
 
-    _initialized = true
+    targetDataSource = target
+
+    initialized = true
   }
 }
 

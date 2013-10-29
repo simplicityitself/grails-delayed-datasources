@@ -3,7 +3,7 @@ import com.simplicityitself.grails.plugin.delayeddatasource.SessionFactoryPostPr
 import org.springframework.jdbc.support.lob.DefaultLobHandler
 
 class DelayedDatasourcesGrailsPlugin {
-  def version = "0.1"
+  def version = "0.2"
   def grailsVersion = "1.3.7 > *"
 
   def title = "Delayed Datasources Plugin"
@@ -14,7 +14,7 @@ Reconfigures and replaces datasource handling with versions that do not require 
 Requires some changes to datasource config, which this plugin will attempt to apply automatically and fail fast if this doesn't work
 '''
 
-  def documentation = "http://grails.org/plugin/delayed-datasources"
+  def documentation = "https://github.com/simplicityitself/grails-delayed-datasources"
 
   def license = "APACHE"
 
@@ -22,7 +22,7 @@ Requires some changes to datasource config, which this plugin will attempt to ap
 
   def issueManagement = [system: "GitHub", url: "https://github.com/simplicityitself/grails-delayed-datasources/issues"]
 
-  def scm = [url: "https://github.com/simplicityitself/grails-delayed-datasources/issues"]
+  def scm = [url: "https://github.com/simplicityitself/grails-delayed-datasources"]
 
   def doWithSpring = {
     sessionFactoryPostProcessor(SessionFactoryPostProcessor)

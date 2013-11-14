@@ -1,6 +1,15 @@
+import com.simplicityitself.grails.plugin.delayeddatasource.DataSourcePostProcessor
 import com.simplicityitself.grails.plugin.delayeddatasource.LazyDataSource
 import com.simplicityitself.grails.plugin.delayeddatasource.SessionFactoryPostProcessor
+import com.simplicityitself.grails.plugin.delayeddatasource.proxies.LazyDataSource
+import org.codehaus.groovy.grails.commons.ConfigurationHolder
+import org.springframework.context.ApplicationContext
 import org.springframework.jdbc.support.lob.DefaultLobHandler
+import org.springframework.jdbc.support.lob.OracleLobHandler
+import org.springframework.jdbc.support.nativejdbc.CommonsDbcpNativeJdbcExtractor
+import org.springframework.jmx.export.MBeanExporter
+import org.springframework.jmx.export.assembler.MethodNameBasedMBeanInfoAssembler
+import org.springframework.jmx.support.MBeanServerFactoryBean
 
 class DelayedDatasourcesGrailsPlugin {
   def version = "0.2"
@@ -25,9 +34,58 @@ Requires some changes to datasource config, which this plugin will attempt to ap
   def scm = [url: "https://github.com/simplicityitself/grails-delayed-datasources"]
 
   def doWithSpring = {
-    sessionFactoryPostProcessor(SessionFactoryPostProcessor)
+    if (pluginEnabled) {
+      log.info "Delayed Datasources Activated"
 
-    //TODO, add support for oracle somehow.
-    lobHandlerOverride(DefaultLobHandler)
+      datasourcePostProcessor(DataSourcePostProcessor)
+
+      lobHandlerOverrideOracle(OracleLobHandler)
+      lobHandlerOverrideOraclePooled(OracleLobHandler) {
+        nativeJdbcExtractor = new CommonsDbcpNativeJdbcExtractor()
+      }
+
+      lobHandlerOverride(DefaultLobHandler)
+
+      mbeanServer(MBeanServerFactoryBean) {
+        locateExistingServerIfPossible = true
+      }
+
+      delayedDataSourceJmxAssembler(MethodNameBasedMBeanInfoAssembler) {
+        managedMethods = [
+            "testConnection",
+            "isCreated",
+            "isCurrentlyAvailable",
+            "getLastError"
+        ]
+      }
+
+      delayedDataSourceExporter(MBeanExporter) {
+        server = mbeanServer
+        assembler = ref("delayedDataSourceJmxAssembler")
+        beans = [:]
+      }
+    } else {
+      log.info "Delayed Datasources Disabled"
+    }
+
+  }
+
+  def doWithApplicationContext = { applicationContext ->
+    if (pluginEnabled) {
+      exportDatasourcesAsMBeans(applicationContext)
+    }
+  }
+
+  def exportDatasourcesAsMBeans(ApplicationContext applicationContext) {
+    def exporter = applicationContext.getBean("delayedDataSourceExporter")
+    def datasources = applicationContext.getBeansOfType(LazyDataSource)
+    datasources.each { name, ds ->
+      def mbeanName = "Data Sources:type=datasource,datasource=${name}"
+      exporter.beans."${mbeanName}" = ds
+    }
+  }
+
+  boolean isPluginEnabled() {
+    ConfigurationHolder.config.delayed_datasource.enabled == "true" || ConfigurationHolder.config.delayed_datasource.enabled == true
   }
 }

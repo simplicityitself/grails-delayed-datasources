@@ -43,6 +43,12 @@ class DelayedDataSourceContextAnalyser {
     return hibernateProperties.propertyValues.propertyValueList[0].value["hibernate.dialect"]
   }
 
+  void ensureDialectIsSet() {
+    if(!dialect) {
+      throw new IllegalStateException("Datasource ${dsName} does not have the dialect explicitly set. This is required to be set for Delayed Datasources")
+    }
+  }
+
   boolean isDataSourceOracle() {
     dialect.contains("Oracle")
   }

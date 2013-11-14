@@ -1,6 +1,4 @@
 import com.simplicityitself.grails.plugin.delayeddatasource.DataSourcePostProcessor
-import com.simplicityitself.grails.plugin.delayeddatasource.LazyDataSource
-import com.simplicityitself.grails.plugin.delayeddatasource.SessionFactoryPostProcessor
 import com.simplicityitself.grails.plugin.delayeddatasource.proxies.LazyDataSource
 import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.context.ApplicationContext
@@ -12,7 +10,7 @@ import org.springframework.jmx.export.assembler.MethodNameBasedMBeanInfoAssemble
 import org.springframework.jmx.support.MBeanServerFactoryBean
 
 class DelayedDatasourcesGrailsPlugin {
-  def version = "0.2"
+  def version = "0.3"
   def grailsVersion = "1.3.7 > *"
 
   def title = "Delayed Datasources Plugin"
@@ -36,7 +34,6 @@ Requires some changes to datasource config, which this plugin will attempt to ap
   def doWithSpring = {
     if (pluginEnabled) {
       log.info "Delayed Datasources Activated"
-
       datasourcePostProcessor(DataSourcePostProcessor)
 
       lobHandlerOverrideOracle(OracleLobHandler)
@@ -80,7 +77,9 @@ Requires some changes to datasource config, which this plugin will attempt to ap
     def exporter = applicationContext.getBean("delayedDataSourceExporter")
     def datasources = applicationContext.getBeansOfType(LazyDataSource)
     datasources.each { name, ds ->
+
       def mbeanName = "Data Sources:type=datasource,datasource=${name}"
+      println "Exporting : $mbeanName"
       exporter.beans."${mbeanName}" = ds
     }
   }

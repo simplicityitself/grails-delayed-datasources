@@ -14,7 +14,7 @@ class DelayedDataSources {
           dsName:it,
           registry: registry,
           analyser: new DelayedDataSourceContextAnalyser(
-              dsName, it, registry:registry))
+              dsName: it, registry:registry))
 
     }
   }

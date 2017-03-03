@@ -6,7 +6,7 @@ The datasources and session factory are reconfigured such that they will only be
 
 Once the session factory and datasources are created, they will act as normal and tolerate failure in the DB connections.
 
-Inspired and adapted from [Burt Beckwiths](http://burtbeckwith.com/blog/?p=312)
+Inspired and adapted from [Burt Beckwith](http://burtbeckwith.com/blog/?p=312)
 
 
 ## Limitations
